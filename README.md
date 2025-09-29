@@ -210,5 +210,4 @@ This application is developed for educational and healthcare management purposes
 ---
 
 ## 🤝 Contributing
-
 We welcome contributions to improve the Patient Management System. Please follow the existing code style and patterns when submitting pull requests. Ensure all new features include appropriate user stories and maintain the professional green theme design language.
