@@ -13,22 +13,32 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+    // Keep settings as a field so header and other methods can access them
+    private SettingsDataStorage settings;
+    private VBox mainLayout;
+    private VBox headerSection;
+    private VBox buttonContainer;
+    private Stage primaryStageRef;
 
     @Override
     public void start(Stage primaryStage) {
+        // Keep reference to primary stage so settings can update title
+        this.primaryStageRef = primaryStage;
         // Create main layout with modern styling
-        VBox mainLayout = new VBox(20);
+        // Load settings
+        this.settings = SettingsDataStorage.getInstance();
+        mainLayout = new VBox(20);
         mainLayout.setAlignment(Pos.CENTER);
         mainLayout.setPadding(new Insets(40));
-        mainLayout.setStyle(
-            "-fx-background: linear-gradient(to bottom, #e8f5e8, #f0f9f0);" // Light green gradient background
-        );
+        // Use single light theme inline
+        mainLayout.setStyle("-fx-background: linear-gradient(to bottom, #e8f5e8, #f0f9f0);");
+        
         
         // Create header section
-        VBox headerSection = createHeaderSection();
+        headerSection = createHeaderSection();
         
         // Create button container with modern card styling
-        VBox buttonContainer = new VBox(15);
+        buttonContainer = new VBox(15);
         buttonContainer.setAlignment(Pos.CENTER);
         buttonContainer.setPadding(new Insets(30));
         buttonContainer.setStyle(
@@ -73,14 +83,75 @@ public class Main extends Application {
             LOGGER.info("Opening saved patients view...");
             showSavedPatientsDialog(primaryStage);
         });
-        
-        buttonContainer.getChildren().addAll(patientFormBtn, checkInBtn, viewPatientsBtn);
-        
+
+        Button settingsButton = createModernButton(
+            "⚙️ Settings",
+            "#007bff", "#0056b3", // Blue colors for settings
+            100, 35
+        );
+
+        settingsButton.setOnAction(e -> {
+            LOGGER.info("Opening Settings...");
+            SettingsGUI settingsGUI = new SettingsGUI();
+            settingsGUI.show();
+            // After settings window closes, re-read settings and apply theme/title
+            this.settings = SettingsDataStorage.getInstance();
+            // Inline theme/title update (previously in applyTheme)
+            if (mainLayout != null) {
+                mainLayout.setStyle("-fx-background: linear-gradient(to bottom, #e8f5e8, #f0f9f0);");
+            }
+            if (headerSection != null) {
+                headerSection.lookupAll(".label").forEach(node -> node.setStyle("-fx-text-fill: #1b5e20;"));
+                // update the title label inside header if present
+                headerSection.getChildren().stream()
+                    .filter(n -> n instanceof Label)
+                    .findFirst()
+                    .ifPresent(n -> ((Label)n).setText(settings.getClinicName()));
+            }
+            if (buttonContainer != null) {
+                buttonContainer.setStyle(
+                    "-fx-background-color: white;" +
+                    "-fx-background-radius: 15;" +
+                    "-fx-border-radius: 15;" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 5);" +
+                    "-fx-border-color: #d4edda;" +
+                    "-fx-border-width: 1;"
+                );
+            }
+            if (primaryStageRef != null) {
+                primaryStageRef.setTitle(settings.getClinicName() + " - Patient Management System");
+            }
+        });
+
+        buttonContainer.getChildren().addAll(patientFormBtn, checkInBtn, viewPatientsBtn, settingsButton);
         mainLayout.getChildren().addAll(headerSection, buttonContainer);
         
         Scene scene = new Scene(mainLayout, 450, 550);
-        primaryStage.setTitle("HealthCare Pro - Patient Management System");
         primaryStage.setScene(scene);
+        // Apply title and inline light styling (previously in applyTheme)
+        if (mainLayout != null) {
+            mainLayout.setStyle("-fx-background: linear-gradient(to bottom, #e8f5e8, #f0f9f0);");
+        }
+        if (headerSection != null) {
+            headerSection.lookupAll(".label").forEach(node -> node.setStyle("-fx-text-fill: #1b5e20;"));
+            headerSection.getChildren().stream()
+                .filter(n -> n instanceof Label)
+                .findFirst()
+                .ifPresent(n -> ((Label)n).setText(settings.getClinicName()));
+        }
+        if (buttonContainer != null) {
+            buttonContainer.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 15;" +
+                "-fx-border-radius: 15;" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 5);" +
+                "-fx-border-color: #d4edda;" +
+                "-fx-border-width: 1;"
+            );
+        }
+        if (primaryStageRef != null) {
+            primaryStageRef.setTitle(settings.getClinicName() + " - Patient Management System");
+        }
         primaryStage.centerOnScreen();
         primaryStage.show();
     }
@@ -94,7 +165,7 @@ public class Main extends Application {
         header.setPadding(new Insets(20));
         
         // Main title
-        Label titleLabel = new Label("HealthCare Pro");
+        Label titleLabel = new Label(settings.getClinicName());
         titleLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 32));
         titleLabel.setStyle("-fx-text-fill: #1b5e20;"); // Dark green
         
@@ -107,10 +178,14 @@ public class Main extends Application {
         Label versionLabel = new Label("v2.0 • Professional Edition");
         versionLabel.setFont(Font.font("Segoe UI", FontWeight.LIGHT, 12));
         versionLabel.setStyle("-fx-text-fill: #81c784;"); // Light green
+
+        
         
         header.getChildren().addAll(titleLabel, subtitleLabel, versionLabel);
         return header;
     }
+
+    // applyTheme removed: styling and title updates are inlined where needed
     
     /**
      * Create a modern styled button
